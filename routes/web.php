@@ -69,6 +69,7 @@ Route::middleware('auth')->group(function () {
              ->name('relatorios.frota');
         Route::get('relatorios/manutencao', [RelatorioController::class, 'manutencao'])
              ->name('relatorios.manutencao');
+             Route::post('relatorios/exportar', [RelatorioController::class, 'exportar'])->name('relatorios.exportar');
     });
 
 });

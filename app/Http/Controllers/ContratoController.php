@@ -39,17 +39,17 @@ class ContratoController extends Controller
             ->pluck('veiculo_placa')
             ->toArray();
 
-        $veiculos = \App\Models\Veiculo::where('status', 'disponivel')
+            $veiculosDisponiveis = \App\Models\Veiculo::where('status', 'disponivel')
             ->whereNotIn('placa', $placasComDocumentoVencido)
             ->get();
 
         
         $clientes = \App\Models\Usuario::whereHas('role', function($query) {
-        $query->where('name', 'usuario'); 
+        $query->where('name', 'cliente'); 
     
         })->get();
 
-        return view('contratos.create', compact('veiculos', 'clientes'));
+        return view('contratos.create', compact('veiculosDisponiveis', 'clientes')); //troca de 'veiculos'para 'veiculosDisponiveis
     }
 
     /**

@@ -13,8 +13,10 @@ return new class extends Migration
     {
         Schema::create('log_atividade', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('usuario_id')->constrained('usuarios');
+            $table->unsignedBigInteger('usuario_id')->nullable();
+            $table->foreign('usuario_id')->references('id')->on('usuarios')->onDelete('set null');
             $table->text('acao');
+            $table->text('descricao');
             $table->timestamps();
         });
     }
@@ -26,4 +28,5 @@ return new class extends Migration
     {
         Schema::dropIfExists('log_atividade');
     }
+    
 };
