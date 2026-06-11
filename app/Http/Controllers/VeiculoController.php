@@ -57,7 +57,8 @@ class VeiculoController extends Controller
         // Registra no log de atividades
         LogAtividade::create([
             'usuario_id'  => auth()->id(),
-            'acao'        => 'Cadastrou o veículo de placa ' . $dados['placa'],
+            'acao'        => 'Cadastrou',
+            'descricao'  => 'Cadastrou o veículo de placa ' . $dados['placa'],
         ]);
 
         return redirect()->route('veiculos.index')
@@ -111,7 +112,8 @@ class VeiculoController extends Controller
         // Registra no log de atividades
         LogAtividade::create([
             'usuario_id' => auth()->id(),
-            'acao'       => 'Atualizou o veículo de placa ' . $veiculo->placa,
+            'acao'       => 'Atualização',
+            'descricao'  => 'Atualizou o veículo de placa ' . $veiculo->placa,
         ]);
 
         return redirect()->route('veiculos.index')
@@ -132,7 +134,8 @@ class VeiculoController extends Controller
         // Registra no log de atividades
         LogAtividade::create([
             'usuario_id' => auth()->id(),
-            'acao'       => 'Removeu o veículo de placa ' . $placa,
+            'acao'       => 'Remoção',
+            'descricao'  => 'Removeu o veículo de placa ' . $dados['placa'],
         ]);
 
         return redirect()->route('veiculos.index')

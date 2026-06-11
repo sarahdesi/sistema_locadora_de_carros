@@ -50,7 +50,8 @@ class UsuarioController extends Controller
         
         LogAtividade::create([
             'usuario_id' => auth()->id(),
-            'acao'       => 'Cadastrou o usuário ' . $dados['name'] . ' (CPF: ' . $dados['cpf'] . ')',
+            'acao'        => 'Cadastro de Usuário',
+            'descricao'       => 'Cadastrou o usuário ' . $dados['name'] . ' (CPF: ' . $dados['cpf'] . ')',
         ]);
 
         return redirect()->route('users.index')
@@ -107,7 +108,8 @@ class UsuarioController extends Controller
         // Registra no log de atividades
         LogAtividade::create([
             'usuario_id' => auth()->id(),
-            'acao'        => 'Atualizou os dados do usuário ' . $usuario->name,
+            'acao'        => 'Atualização',
+            'descricao'        => 'Atualizou os dados do usuário ' . $usuario->name,
         ]);
 
         return redirect()->route('users.index')
@@ -122,7 +124,8 @@ class UsuarioController extends Controller
         // Registra no log de atividades
         LogAtividade::create([
             'usuario_id' => auth()->id(),
-            'acao'       => 'Removeu o usuário de cpf ' . $cpf,
+            'acao'        => 'Remoção',
+            'descricao'        => 'Removeu os dados do usuário ' . $usuario->name,
         ]);
 
         return redirect()->route('users.index')

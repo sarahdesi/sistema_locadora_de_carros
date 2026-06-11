@@ -31,20 +31,26 @@
                     🚗 Veículos
                 </a>
 
-                <a href="{{ route('documentos.index') }}" 
-                class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition {{ request()->routeIs('documentos.*') ? 'bg-blue-50 text-blue-600 font-semibold' : 'text-gray-600 hover:bg-gray-50' }}">
-                    📄 <span class="sidebar-text">Documentos</span>
-                </a>
-
                 <a href="{{ route('contratos.index') }}"
                    class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition">
                     📋 Contratos
                 </a>
-
+                
+            
                 @if(auth()->user()->isGerente() || auth()->user()->isOperador())
                     <a href="{{ route('users.index') }}"
                        class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition">
                         👥 Usuários
+                    </a>
+
+                    <a href="{{ route('relatorios') }}"
+                       class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition">
+                        📊 Relatórios
+                    </a>
+
+                     <a href="{{ route('documentos.index') }}" 
+                    class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition {{ request()->routeIs('documentos.*') ? 'bg-blue-50 text-blue-600 font-semibold' : 'text-gray-600 hover:bg-gray-50' }}">
+                    📄 <span class="sidebar-text">Documentos</span>
                     </a>
 
                     <a href="{{ route('manutencao.index') }}"
@@ -59,10 +65,6 @@
                 @endif
 
                 @if(auth()->user()->isGerente())
-                    <a href="{{ route('relatorios') }}"
-                       class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition">
-                        📊 Relatórios
-                    </a>
 
                     <a href="{{ route('logs.index') }}"
                        class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition">

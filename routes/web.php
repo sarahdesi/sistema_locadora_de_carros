@@ -49,27 +49,23 @@ Route::middleware('auth')->group(function () {
         Route::resource('documentos', DocumentoVeiculoController::class);
         Route::resource('alarmes', AlarmeController::class);
         Route::resource('valor-extra', ValorExtraController::class);
-        
+        //check in e check out
         Route::get('check-in/{id}', [CheckInController::class, 'create'])->name('check-in.create');
         Route::post('check-in/{id}', [CheckInController::class, 'store'])->name('check-in.store');
-
         Route::get('check-out/{id}', [CheckOutController::class, 'create'])->name('check-out.create');
         Route::post('check-out/{id}', [CheckOutController::class, 'store'])->name('check-out.store');
-        Route::get('logs', [LogAtividadeController::class, 'index'])
-             ->name('logs.index');
+        //relatorios
+        Route::get('relatorios', [RelatorioController::class, 'index'])->name('relatorios');
+        Route::get('relatorios/faturamento', [RelatorioController::class, 'faturamento'])->name('relatorios.faturamento');
+        Route::get('relatorios/frota', [RelatorioController::class, 'frota'])->name('relatorios.frota');
+        Route::get('relatorios/manutencao', [RelatorioController::class, 'manutencao'])->name('relatorios.manutencao');
     });
+    
+        });
 
     // SÓ GERENTE
     Route::middleware('can:is-gerente')->group(function () {
-        Route::get('relatorios', [RelatorioController::class, 'index'])
-             ->name('relatorios');
-        Route::get('relatorios/faturamento', [RelatorioController::class, 'faturamento'])
-             ->name('relatorios.faturamento');
-        Route::get('relatorios/frota', [RelatorioController::class, 'frota'])
-             ->name('relatorios.frota');
-        Route::get('relatorios/manutencao', [RelatorioController::class, 'manutencao'])
-             ->name('relatorios.manutencao');
-             Route::post('relatorios/exportar', [RelatorioController::class, 'exportar'])->name('relatorios.exportar');
-    });
-
-});
+        Route::post('relatorios/exportar', [RelatorioController::class, 'exportar'])->name('relatorios.exportar');
+        Route::get('logs', [LogAtividadeController::class, 'index'])
+             ->name('logs.index');
+             });
