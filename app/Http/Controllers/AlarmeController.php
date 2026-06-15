@@ -59,13 +59,13 @@ class AlarmeController extends Controller
         // REQUISITO 3: Controle de Devoluções (Atrasadas ou Próximas)
         // ---------------------------------------------------------------------
         // Busca contratos 'em_andamento' onde a previsão de retorno já passou do horário atual
-        $devolucoesAtrasadas = Contrato::with(['veiculo', 'usuario'])
+        $devolucoesAtrasadas = Contrato::with(['veiculo', 'cliente'])
             ->where('status_contrato', 'em_andamento')
             ->where('data_hora_retorno', '<', Carbon::now())
             ->get();
 
         // Contratos que vencem hoje (próximos do vencimento)
-        $devolucoesProximas = Contrato::with(['veiculo', 'usuario'])
+        $devolucoesProximas = Contrato::with(['veiculo', 'cliente'])
             ->where('status_contrato', 'em_andamento')
             ->whereDate('data_hora_retorno', $hoje)
             ->where('data_hora_retorno', '>=', Carbon::now())

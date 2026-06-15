@@ -13,12 +13,12 @@ class UsuarioSeeder extends Seeder
      */
     public function run(): void
     {
-        // CORRIGIDO: Agora enviando o 'guard_name' obrigatório exigido pelo banco de dados
+        
         Role::firstOrCreate(['name' => 'gerente', 'guard_name' => 'web']);
         Role::firstOrCreate(['name' => 'operador', 'guard_name' => 'web']);
         Role::firstOrCreate(['name' => 'cliente', 'guard_name' => 'web']);
 
-        // O restante do código permanece igual buscando pelo 'name'
+        
         $roleGerente = Role::where('name', 'gerente')->first();
         Usuario::create([
             'cpf'             => '12345678901',

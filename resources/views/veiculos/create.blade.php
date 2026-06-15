@@ -24,8 +24,8 @@
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Placa</label>
                             <input type="text" name="placa" value="{{ old('placa') }}"
-                                   maxlength="8"
-                                   placeholder="ABC1D23 ou AAA-1234"
+                                   maxlength="7"
+                                   placeholder="ABC1D23"
                                    required
                                    class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-blue-500 focus:border-blue-500 uppercase">
                             @error('placa')

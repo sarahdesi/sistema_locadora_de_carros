@@ -26,7 +26,12 @@ class ProfileController extends Controller
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
-        $request->user()->fill($request->validated());
+        $request->user()->fill($request->validate([
+        'name' => ['required', 'string', 'max:255'],
+        'login' => ['required', 'string', 'lowercase', 'email', 'max:255'],
+        'telefone' => ['nullable', 'string'],
+        'validade_cnh' => ['nullable', 'date'], // 🔥 Permite atualizar a data da CNH
+    ]));
 
         if ($request->user()->isDirty('email')) {
             $request->user()->email_verified_at = null;

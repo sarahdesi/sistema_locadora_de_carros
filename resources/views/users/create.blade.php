@@ -73,7 +73,7 @@
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Telefone / Celular</label>
                             <input type="text" name="telefone" value="{{ old('telefone') }}"
-                                   maxlength="20"
+                                   maxlength="11"
                                    placeholder="Ex: (38) 99999-9999"
                                    required
                                    class="w-full border border-gray-300 rounded-lg px-3 py-2">

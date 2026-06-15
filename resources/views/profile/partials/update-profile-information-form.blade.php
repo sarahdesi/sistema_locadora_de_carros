@@ -17,16 +17,18 @@
         @csrf
         @method('patch')
 
+        {{-- 1. CAMPO: NOME --}}
         <div>
             <x-input-label for="name" :value="__('Name')" />
             <x-text-input id="name" name="name" type="text" class="mt-1 block w-full" :value="old('name', $user->name)" required autofocus autocomplete="name" />
             <x-input-error class="mt-2" :messages="$errors->get('name')" />
         </div>
 
+        {{-- 2. CAMPO: EMAIL --}}
         <div>
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" name="email" type="email" class="mt-1 block w-full" :value="old('email', $user->email)" required autocomplete="username" />
-            <x-input-error class="mt-2" :messages="$errors->get('email')" />
+            <x-input-label for="login" :value="__('Email')" />
+            <x-text-input id="login" name="login" type="email" class="mt-1 block w-full" :value="old('login', $user->login)" required autocomplete="username" />
+            <x-input-error class="mt-2" :messages="$errors->get('login')" />
 
             @if ($user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail && ! $user->hasVerifiedEmail())
                 <div>
@@ -47,6 +49,24 @@
             @endif
         </div>
 
+        {{-- 📞 3. NOVO CAMPO: TELEFONE --}}
+        <div>
+            <x-input-label for="telefone" :value="__('Telefone')" />
+            <x-text-input id="telefone" name="telefone" type="text" class="mt-1 block w-full" :value="old('telefone', $user->telefone)" placeholder="(00) 00000-0000" autocomplete="tel" />
+            <x-input-error class="mt-2" :messages="$errors->get('telefone')" />
+        </div>
+
+        {{-- 📅 4. NOVO CAMPO: VALIDADE DA CNH (Aparece apenas para clientes) --}}
+        @if($user->role_id == 3 || $user->role === 'cliente')
+            <div>
+                <x-input-label for="validade_cnh" :value="__('Validade da CNH')" />
+                <x-text-input id="validade_cnh" name="validade_cnh" type="date" class="mt-1 block w-full" 
+                    :value="old('validade_cnh', $user->validade_cnh ? \Carbon\Carbon::parse($user->validade_cnh)->format('Y-m-d') : '')" />
+                <x-input-error class="mt-2" :messages="$errors->get('validade_cnh')" />
+            </div>
+        @endif
+
+        {{-- BOTÃO DE SALVAR --}}
         <div class="flex items-center gap-4">
             <x-primary-button>{{ __('Save') }}</x-primary-button>
 

@@ -21,7 +21,8 @@ class ProfileUpdateRequest extends FormRequest
             'cpf' => ['required', 'string', 'max:14', \Illuminate\Validation\Rule::unique('users')->ignore($this->user()->id)],
             'cnh' => ['required', 'string', \Illuminate\Validation\Rule::unique('users')->ignore($this->user()->id)],
             'validade_cnh' => ['required', 'date'],
-            'email' => [
+            'telefone' => ['nullable', 'string', 'max:11'], 
+            'login' => [
                 'required',
                 'string',
                 'lowercase',

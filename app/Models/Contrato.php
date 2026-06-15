@@ -40,5 +40,4 @@ class Contrato extends Model
         return $this->hasMany(MotoristaAutorizado::class);
     }
 
-
 }

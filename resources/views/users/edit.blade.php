@@ -78,7 +78,7 @@
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">CNH (Opcional)</label>
                             <input type="text" name="cnh" value="{{ old('cnh', $usuario->cnh) }}"
-                                   maxlength="11"
+                                   maxlength="9"
                                    placeholder="Apenas números"
                                    class="w-full border border-gray-300 rounded-lg px-3 py-2">
                             @error('cnh')

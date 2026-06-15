@@ -71,7 +71,7 @@
                                     <td class="px-6 py-4 text-right whitespace-nowrap font-medium text-xs space-x-1">
                                         <a href="{{ route('documentos.edit', $doc->id) }}" 
                                            class="inline-block bg-gray-100 text-gray-700 px-2.5 py-1.5 rounded-lg hover:bg-gray-200 transition">
-                                            Editar / Renovar
+                                            Editar
                                         </a>
                                         <form method="POST" action="{{ route('documentos.destroy', $doc->id) }}" class="inline-block" onsubmit="return confirm('Tem certeza que deseja remover este documento?')">
                                             @csrf

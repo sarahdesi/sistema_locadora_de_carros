@@ -7,6 +7,11 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 class Usuario extends Authenticatable
 {
     protected $table = 'usuarios';
+    protected $casts = [
+    'email_verified_at' => 'datetime',
+    'password' => 'hashed',
+    'validade_cnh' => 'date', 
+];
 
     protected $fillable = [
         'cpf',
