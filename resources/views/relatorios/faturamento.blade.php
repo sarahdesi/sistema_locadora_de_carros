@@ -1,19 +1,32 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex justify-between items-center">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                💰 Relatório Detalhado de Faturamento
+                💵 Relatórios Financeiros e Faturamento
             </h2>
-            <a href="{{ route('relatorios') }}" class="text-sm bg-gray-100 text-gray-700 px-3 py-1.5 rounded-lg hover:bg-gray-200 transition">
-                ← Voltar ao Painel
-            </a>
+
+            @can('is-gerente')
+                <form method="POST" action="{{ route('relatorios.exportar') }}" class="inline-block">
+                    @csrf
+                    <input type="hidden" name="data_inicio" value="{{ $dataInicio }}">
+                    <input type="hidden" name="data_fim" value="{{ $dataFim }}">
+                    <input type="hidden" name="contexto" value="financeiro"> 
+                    
+                    <button type="submit" class="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition text-sm font-semibold shadow-sm">
+                        🖨️ Exportar Relatório Financeiro (PDF)
+                    </button>
+                </form>
+            @endcan
         </div>
     </x-slot>
 
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
+            
+            {{-- NAVEGAÇÃO DE ABAS --}}
+            <x-relatorios-nav :dataInicio="$dataInicio" :dataFim="$dataFim" />
 
-            {{-- BARRA DE FILTRO POR PERÍODO --}}
+            {{-- FILTROS --}}
             <div class="bg-white rounded-xl shadow p-4 border border-gray-100">
                 <form method="GET" action="{{ route('relatorios.faturamento') }}" class="flex flex-wrap items-end gap-4">
                     <div>
@@ -32,7 +45,7 @@
                 </form>
             </div>
 
-            {{-- TABELA DE CONTRATOS FATURADOS --}}
+            {{-- TABELA DE CONTRATOS --}}
             <div class="bg-white rounded-xl shadow overflow-hidden">
                 <div class="p-4 bg-gray-50 border-b border-gray-100 flex justify-between items-center">
                     <span class="text-xs font-bold text-gray-500 uppercase">Receitas de Locação</span>
@@ -67,16 +80,13 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="5" class="px-6 py-12 text-center text-gray-400 italic">
-                                        Nenhum faturamento registado no período selecionado.
-                                    </td>
+                                    <td colspan="5" class="px-6 py-12 text-center text-gray-400 italic">Nenhum faturamento registrado no período.</td>
                                 </tr>
                             @endforelse
                         </tbody>
                     </table>
                 </div>
             </div>
-
         </div>
     </div>
 </x-app-layout>

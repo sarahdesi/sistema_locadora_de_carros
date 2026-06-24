@@ -128,6 +128,10 @@ class VeiculoController extends Controller
     {
         Gate::authorize('is-staff');
 
+        if ($veiculo->contratos()->exists()) {
+        return redirect()->back()->with('error', 'Não é possível excluir este veículo porque ele possui contratos vinculados no sistema.');
+    }
+
         $placa = $veiculo->placa;
         $veiculo->delete();
 
@@ -135,7 +139,7 @@ class VeiculoController extends Controller
         LogAtividade::create([
             'usuario_id' => auth()->id(),
             'acao'       => 'Remoção',
-            'descricao'  => 'Removeu o veículo de placa ' . $dados['placa'],
+            'descricao'  => 'Removeu o veículo de placa ' . $placa,
         ]);
 
         return redirect()->route('veiculos.index')

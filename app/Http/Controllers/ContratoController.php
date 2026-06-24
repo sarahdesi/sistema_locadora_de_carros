@@ -31,26 +31,28 @@ class ContratoController extends Controller
     /**
      * Formulário de nova locação
      */
-   public function create()
-    {
-        Gate::authorize('is-staff');
-
-        $placasComDocumentoVencido = \App\Models\DocumentoVeiculo::where('data_vencimento', '<', now()->format('Y-m-d'))
-            ->pluck('veiculo_placa')
-            ->toArray();
-
-            $veiculosDisponiveis = \App\Models\Veiculo::where('status', 'disponivel')
-            ->whereNotIn('placa', $placasComDocumentoVencido)
-            ->get();
-
-        
-        $clientes = \App\Models\Usuario::whereHas('role', function($query) {
-        $query->where('name', 'cliente'); 
+public function create()
+{
     
-        })->get();
+    $placasComDocumentoVencido = \App\Models\DocumentoVeiculo::where('data_vencimento', '<', now()->format('Y-m-d'))
+        ->pluck('veiculo_placa')
+        ->toArray();
 
-        return view('contratos.create', compact('veiculosDisponiveis', 'clientes')); //troca de 'veiculos'para 'veiculosDisponiveis
+    $veiculosDisponiveis = \App\Models\Veiculo::where('status', 'disponivel')
+        ->whereNotIn('placa', $placasComDocumentoVencido)
+        ->get();
+
+    
+    $clientes = collect(); 
+    
+    if (Gate::allows('is-staff')) {
+        $clientes = \App\Models\Usuario::whereHas('role', function($query) {
+            $query->where('name', 'cliente'); 
+        })->get();
     }
+
+    return view('contratos.create', compact('veiculosDisponiveis', 'clientes'));
+}
 
     /**
      * Salva o contrato / Solicita locação
@@ -172,21 +174,6 @@ class ContratoController extends Controller
                          ->with('success', 'Contrato atualizado com sucesso no banco de dados!');
     }
 
-    /**
-     * Cancela/Exclui o contrato (Apenas Gerente e Operador)
-     */
-    public function destroy(Contrato $contrato)
-    {
-        Gate::authorize('is-staff');
+    
 
-        // Antes de deletar, devolve o carro para o estado de disponível
-        $veiculo = Veiculo::find($contrato->veiculo_id);
-        if ($veiculo) {
-            $veiculo->update(['status' => 'disponivel']);
-        }
-
-        $contrato->delete();
-
-        return redirect()->route('contratos.index')->with('success', 'Contrato removido.');
-    }
 }

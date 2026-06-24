@@ -45,7 +45,7 @@
                         👥 Usuários
                     </a>
 
-                    <a href="{{ route('relatorios') }}"
+                    <a href="{{ route('relatorios.index') }}"
                        class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition">
                         📊 Relatórios
                     </a>

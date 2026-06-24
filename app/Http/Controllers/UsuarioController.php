@@ -34,7 +34,7 @@ class UsuarioController extends Controller
             'name'                => 'required|string|max:100',
             'data_nascimento'     => 'required|date',
             'telefone'            =>'required|string|max:11',
-            'cnh'                 => 'required|string|size:9|unique:usuarios,cnh',
+            'cnh'                 => 'required|string|size:11|unique:usuarios,cnh',
             'validade_cnh'    => 'nullable|date',
             'login'           => 'required|string|email|max:100|unique:usuarios,login',
             'password'        => 'required|string|min:6',
@@ -88,10 +88,10 @@ class UsuarioController extends Controller
             'name'            => 'required|string|max:100',
             'data_nascimento' => 'required|date',
             'telefone'        => 'required|string|max:11',
-            'cnh'             => 'nullable|string|max:9|unique:usuarios,cnh,' . $usuario->id,
+            'cnh'             => 'nullable|string|max:11|unique:usuarios,cnh,' . $usuario->id,
             'validade_cnh'    => 'nullable|date',
             'login'           => 'required|string|email|max:100|unique:usuarios,login,' . $usuario->id,
-            'password'        => 'nullable|string|min:6', // Senha opcional na edição
+            'password'        => 'nullable|string|min:6', 
             'role_id'         => 'required|exists:roles,id',
         ]);
 
@@ -118,6 +118,10 @@ class UsuarioController extends Controller
 
     public function destroy(Usuario $usuario)
     {
+        if ($usuario->contratos()->exists()) {
+        return redirect()->back()->with('error', 'Não é possível excluir este usuário porque ele possui contratos vinculados ao seu perfil.');
+        }
+
         $cpf = $usuario->cpf;
         $usuario->delete();
 

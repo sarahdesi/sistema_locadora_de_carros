@@ -63,7 +63,7 @@
 
                         {{-- Telefone --}}
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Telefone / Celular</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Telefone</label>
                             <input type="text" name="telefone" value="{{ old('telefone', $usuario->telefone) }}"
                                    maxlength="20"
                                    placeholder="Ex: (38) 99999-9999"
@@ -76,9 +76,9 @@
 
                         {{-- CNH --}}
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">CNH (Opcional)</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">CNH</label>
                             <input type="text" name="cnh" value="{{ old('cnh', $usuario->cnh) }}"
-                                   maxlength="9"
+                                   maxlength="11"
                                    placeholder="Apenas números"
                                    class="w-full border border-gray-300 rounded-lg px-3 py-2">
                             @error('cnh')
@@ -87,10 +87,11 @@
                         </div>
 
                         {{-- Validade da CNH --}}
-                        <div>
+                        <div class="col-span-2 md:col-span-1">
                             <label class="block text-sm font-medium text-gray-700 mb-1">Validade da CNH</label>
-                            <input type="date" name="validade_cnh" value="{{ old('validade_cnh', $usuario->validade_cnh) }}"
-                                   class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                            <input type="date" name="validade_cnh" 
+                                value="{{ old('validade_cnh', $usuario->validade_cnh ? \Carbon\Carbon::parse($usuario->validade_cnh)->format('Y-m-d') : '') }}"
+                                class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-blue-500 focus:border-blue-500">
                             @error('validade_cnh')
                                 <span class="text-red-500 text-xs">{{ $message }}</span>
                             @enderror

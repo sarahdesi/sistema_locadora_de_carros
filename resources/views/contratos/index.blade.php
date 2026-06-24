@@ -110,12 +110,7 @@
                                             <a href="{{ route('contratos.edit', $contrato) }}" 
                                                class="text-amber-600 hover:text-amber-900 transition">Editar</a>
                                             
-                                            <form action="{{ route('contratos.destroy', $contrato) }}" method="POST" class="inline-block"
-                                                  onsubmit="return confirm('Tem certeza que deseja remover este contrato permanente? O veículo voltará a ficar disponível.');">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="text-red-600 hover:text-red-900 transition">Excluir</button>
-                                            </form>
+                                    
                                         @endcan
                                     </td>
                                 </tr>

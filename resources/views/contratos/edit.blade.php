@@ -6,7 +6,7 @@
                 ← Voltar
             </a>
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                Editar Contrato #{{ $contrato->id }}
+                Editar Contrato {{ $contrato->id }}
             </h2>
         </div>
     </x-slot>

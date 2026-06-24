@@ -59,30 +59,30 @@
 
                 {{-- Bloco 2: Histórico de Contratos / Locações --}}
                 <div class="bg-white rounded-xl shadow p-6">
-                    <h2 class="text-lg font-semibold text-gray-700 mb-4">Histórico de Locações</h2>
-                    @forelse($usuario->contratos as $contrato)
-                        <div class="border-b border-gray-100 pb-3 mb-3 text-sm last:border-0 last:pb-0 last:mb-0">
-                            <div class="flex justify-between items-start">
-                                <div>
-                                    <p class="font-medium text-gray-800">Contrato #{{ $contrato->id }}</p>
-                                    <p class="text-gray-500 text-xs mt-0.5">
-                                        Período: {{ \Carbon\Carbon::parse($contrato->created_at)->format('d/m/Y') }} até {{ \Carbon\Carbon::parse($contrato->daa+hora_retorno)->format('d/m/Y') }}
-                                    </p>
-                                </div>
-                                <span class="px-2 py-0.5 text-xs font-semibold rounded-full bg-gray-100 text-gray-700">
-                                    {{ ucfirst($contrato->status_contrato ?? 'Pendente') }}
-                                </span>
+                <h2 class="text-lg font-semibold text-gray-700 mb-4">Histórico de Locações</h2>
+                @forelse($usuario->contratos as $contrato)
+                    <div class="border-b border-gray-100 pb-3 mb-3 text-sm last:border-0 last:pb-0 last:mb-0">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="font-medium text-gray-800">Contrato #{{ $contrato->id }}</p>
+                                <p class="text-gray-500 text-xs mt-0.5">
+                                    Período: {{ \Carbon\Carbon::parse($contrato->created_at)->format('d/m/Y') }} até {{ \Carbon\Carbon::parse($contrato->data_hora_retorno)->format('d/m/Y') }}
+                                </p>
                             </div>
-                            <p class="text-emerald-600 font-medium mt-1">
-                                R$ {{ number_format($contrato->valor_total ?? 0, 2, ',', '.') }}
-                            </p>
+                            <span class="px-2 py-0.5 text-xs font-semibold rounded-full bg-gray-100 text-gray-700">
+                                {{ ucfirst($contrato->status_contrato ?? 'Pendente') }}
+                            </span>
                         </div>
-                    @empty
-                        <div class="flex flex-col items-center justify-center py-12 text-gray-400">
-                            <p class="text-sm">Este usuário ainda não realizou nenhuma locação.</p>
-                        </div>
-                    @endforelse
-                </div>
+                        <p class="text-emerald-600 font-medium mt-1">
+                            R$ {{ number_format($contrato->valor_total ?? 0, 2, ',', '.') }}
+                        </p>
+                    </div>
+                @empty
+                    <div class="flex flex-col items-center justify-center py-12 text-gray-400">
+                        <p class="text-sm">Este usuário ainda não realizou nenhuma locação.</p>
+                    </div>
+                @endforelse
+            </div>
 
             </div>
 

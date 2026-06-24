@@ -46,7 +46,7 @@
 
                         {{-- CPF --}}
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">CPF (Apenas números)</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">CPF</label>
                             <input type="text" name="cpf" value="{{ old('cpf') }}"
                                    maxlength="11"
                                    pattern="\d{11}"
@@ -84,7 +84,7 @@
 
                         {{-- CNH --}}
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">CNH (Opcional)</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">CNH</label>
                             <input type="text" name="cnh" value="{{ old('cnh') }}"
                                    maxlength="11"
                                    placeholder="Apenas números"

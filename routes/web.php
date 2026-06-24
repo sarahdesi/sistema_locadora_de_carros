@@ -35,11 +35,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-
-    // TODOS OS PERFIS — veículos (somente leitura para cliente)
     Route::resource('veiculos', VeiculoController::class);
-
-    // TODOS OS PERFIS — contratos
     Route::resource('contratos', ContratoController::class);
 
     // OPERADOR E GERENTE
@@ -55,7 +51,7 @@ Route::middleware('auth')->group(function () {
         Route::get('check-out/{id}', [CheckOutController::class, 'create'])->name('check-out.create');
         Route::post('check-out/{id}', [CheckOutController::class, 'store'])->name('check-out.store');
         //relatorios
-        Route::get('relatorios', [RelatorioController::class, 'index'])->name('relatorios');
+        Route::get('relatorios/index', [RelatorioController::class, 'index'])->name('relatorios.index');
         Route::get('relatorios/faturamento', [RelatorioController::class, 'faturamento'])->name('relatorios.faturamento');
         Route::get('relatorios/frota', [RelatorioController::class, 'frota'])->name('relatorios.frota');
         Route::get('relatorios/manutencao', [RelatorioController::class, 'manutencao'])->name('relatorios.manutencao');
@@ -65,7 +61,7 @@ Route::middleware('auth')->group(function () {
 
     // SÓ GERENTE
     Route::middleware('can:is-gerente')->group(function () {
-        Route::post('relatorios/exportar', [RelatorioController::class, 'exportar'])->name('relatorios.exportar');
+        Route::post('/exportar', [RelatorioController::class, 'exportar'])->name('relatorios.exportar');
         Route::get('logs', [LogAtividadeController::class, 'index'])
              ->name('logs.index');
              });
