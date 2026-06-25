@@ -1,240 +1,190 @@
 <?php
 
 use Livewire\Volt\Component;
-use App\Models\Contrato;
-use App\Models\Veiculo;
 use App\Models\Usuario;
-use App\Models\DocumentoVeiculo;
-use Illuminate\Support\Facades\Gate;
+use App\Models\Veiculo;
+use App\Models\Contrato;
 use Carbon\Carbon;
 
-new class extends Component
-{
-    // Propriedades do formulário
-    public $cliente_id;
-    public $veiculo_id;
-    public $data_hora_retorno;
-    public $valor_diaria;
-    public $valor_total = 0; // <-- NOVA PROPRIEDADE
+new class extends Component {
+    // Dados de controle do Cliente
+    public $cliente_id = '';
+    public $busca_cliente = '';
 
-    // Regras de validação
-    protected function rules()
+    // Dados de controle do Veículo
+    public $veiculo_id = '';
+    public $busca_veiculo = '';
+
+    // Restante dos dados do contrato
+    public $data_hora_retorno = '';
+
+    public function mount()
     {
-        $rules = [
-            'veiculo_id'        => 'required|exists:veiculos,id',
-            'data_hora_retorno' => 'required|date|after:now',
-            'valor_diaria'      => 'required|numeric|min:0',
-        ];
-
-        if (Gate::allows('is-staff')) {
-            $rules['cliente_id'] = 'required|exists:usuarios,id';
-        }
-
-        return $rules;
-    }
-
-    // Ouvinte do Livewire: Executa automaticamente sempre que qualquer propriedade muda na tela
-    public function updated($propertyName)
-    {
-        // Se mudarem a data de retorno ou o valor da diária, recalculamos o total
-        if (in_array($propertyName, ['data_hora_retorno', 'valor_diaria'])) {
-            $this->calcularValorTotal();
-        }
-    }
-
-    // Função que faz a matemática do contrato
-    public function calcularValorTotal()
-    {
-        if ($this->data_hora_retorno && $this->valor_diaria) {
-            $inicio = Carbon::now();
-            $fim = Carbon::parse($this->data_hora_retorno);
-
-            // Calcula a quantidade de dias (usa ceil para arredondar horas quebradas para cima)
-            $dias = max(1, ceil($inicio->diffInHours($fim) / 24));
-
-            // Multiplica os dias pelo valor informado da diária
-            $this->valor_total = $dias * (float) $this->valor_diaria;
-        } else {
-            $this->valor_total = 0;
-        }
-    }
-
-    // Salva os dados no banco
-    public function save()
-    {
-        $this->validate();
-
-        $user = auth()->user();
-        $validatedData = [
-            'veiculo_id'        => $this->veiculo_id,
-            'data_hora_retorno' => $this->data_hora_retorno,
-            'valor_diaria'      => $this->valor_diaria,
-            'valor_total'       => $this->valor_total, // <-- SALVA O VALOR CALCULADO
-            'status_contrato'   => 'aberto',
-        ];
-
-        if (!Gate::allows('is-staff')) {
-            $validatedData['cliente_id'] = $user->id;
-            $validatedData['servidor_id'] = null;
-        } else {
-            $validatedData['cliente_id'] = $this->cliente_id;
-            $validatedData['servidor_id'] = $user->id;
-        }
-
-        $veiculo = Veiculo::findOrFail($this->veiculo_id);
-
-        $temPendeciaDocumento = DocumentoVeiculo::where('veiculo_placa', $veiculo->placa)
-            ->where('data_vencimento', '<', now()->format('Y-m-d'))
-            ->exists();
-
-        if ($temPendeciaDocumento) {
-            session()->flash('error', 'Bloqueio de Segurança: Este veículo possui pendências na tabela de documentos!');
-            return;
-        }
-
-        $contrato = Contrato::create($validatedData);
-        $veiculo->update(['status' => 'reservado']);
-
-        session()->flash('sucesso', 'Contrato aberto com sucesso!');
-
-        return redirect()->route('contratos.show', $contrato);
+        $this->data_hora_retorno = Carbon::now()->addDays(3)->format('Y-m-d\TH:i');
     }
 
     public function with(): array
     {
-        // NOTA: Voltei a consulta original filtrando por 'disponivel' para manter sua regra de negócio ativa.
-        // Garanta que você possui carros com status 'disponivel' no banco para que apareçam.
-        $placasComDocumentoVencido = DocumentoVeiculo::where('data_vencimento', '<', now()->format('Y-m-d'))
-            ->pluck('veiculo_placa')
-            ->toArray();
+        $clientesFiltrados = [];
+        $veiculosFiltrados = [];
 
-        $veiculosDisponiveis = Veiculo::where('status', 'disponivel')
-            ->whereNotIn('placa', $placasComDocumentoVencido)
-            ->get();
+        if (strlen($this->busca_cliente) >= 2 && empty($this->cliente_id)) {
+            $clientesFiltrados = Usuario::where('name', 'ILIKE', '%' . $this->busca_cliente . '%')
+                ->orWhere('cpf', 'ILIKE', '%' . $this->busca_cliente . '%')
+                ->limit(5)->get();
+        }
 
-        $clientes = collect();
-        if (Gate::allows('is-staff')) {
-            $clientes = Usuario::whereHas('role', function($query) {
-                $query->where('name', 'cliente'); 
-            })->get();
+        if (strlen($this->busca_veiculo) >= 2 && empty($this->veiculo_id)) {
+            $veiculosFiltrados = Veiculo::where('status', 'disponivel')
+                ->where(function($query) {
+                    $query->where('marca', 'ILIKE', '%' . $this->busca_veiculo . '%')
+                          ->orWhere('modelo', 'ILIKE', '%' . $this->busca_veiculo . '%')
+                          ->orWhere('placa', 'ILIKE', '%' . $this->busca_veiculo . '%');
+                })->limit(5)->get();
         }
 
         return [
-            'veiculosDisponiveis' => $veiculosDisponiveis,
-            'clientes' => $clientes
+            'clientes' => $clientesFiltrados,
+            'veiculos' => $veiculosFiltrados
         ];
+    }
+
+    public function selecionarCliente($id, $nome)
+    {
+        $this->cliente_id = $id;
+        $this->busca_cliente = $nome;
+    }
+
+    public function limparCliente()
+    {
+        $this->cliente_id = '';
+        $this->busca_cliente = '';
+    }
+
+    public function selecionarVeiculo($id, $nome)
+    {
+        $this->veiculo_id = $id;
+        $this->busca_veiculo = $nome;
+    }
+
+    public function limparVeiculo()
+    {
+        $this->veiculo_id = '';
+        $this->busca_veiculo = '';
+    }
+
+    public function confirmarLocacao()
+    {
+        $this->validate([
+            'cliente_id'        => 'required|exists:usuarios,id',
+            'veiculo_id'        => 'required|exists:veiculos,id',
+            'data_hora_retorno' => 'required|date|after:now',
+        ], [
+            'cliente_id.required' => 'Você precisa selecionar um cliente válido na busca.',
+            'veiculo_id.required' => 'Você precisa selecionar um veículo disponível na busca.',
+        ]);
+
+        $veiculo = Veiculo::findOrFail($this->veiculo_id);
+
+        Contrato::create([
+            'cliente_id'         => $this->cliente_id,
+            'veiculo_id'         => $this->veiculo_id,
+            'data_hora_retorno'  => $this->data_hora_retorno,
+            'status_contrato'    => 'aberto',
+            'valor_diaria'       => 150.00,
+            'servidor_id'        => auth()->id()
+        ]);
+
+        $veiculo->update(['status' => 'reservado']);
+
+        session()->flash('success', 'Locação aberta com sucesso! Realize o Check-in na retirada do veículo.');
+
+        return redirect()->route('contratos.index');
     }
 }; ?>
 
-<div>
-    <div class="bg-white rounded-xl shadow p-6 max-w-2xl mx-auto">
-        
-        @if (session()->has('error'))
-            <div class="mb-6 p-4 bg-red-50 border border-red-200 text-red-600 rounded-lg text-sm">
-                {{ session('error') }}
-            </div>
-        @endif
-
-        <form wire:submit.prevent="save">
-            <div class="grid grid-cols-2 gap-4">
-
-                {{-- Seleção de Cliente ou Alerta Informativo --}}
-                @can('is-staff')
-                    <div class="col-span-2 md:col-span-1">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Selecionar Cliente</label>
-                        <select wire:model.live="cliente_id" required
-                                class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-blue-500 focus:border-blue-500">
-                            <option value="">Selecione o cliente...</option>
-                            @foreach($clientes as $cliente)
-                                <option value="{{ $cliente->id }}">
-                                    {{ $cliente->name }} (CPF: {{ $cliente->cpf }})
-                                </option>
-                            @endforeach
-                        </select>
-                        @error('cliente_id')
-                            <span class="text-red-500 text-xs">{{ $message }}</span>
-                        @enderror
-                    </div>
-                @else
-                    <div class="col-span-2 bg-blue-50 border border-blue-100 rounded-xl p-4 text-sm text-blue-700 flex items-center gap-3 shadow-sm mb-2">
-                        <svg class="w-5 h-5 text-blue-500 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
-                        </svg>
-                        <span>Você está solicitando uma reserva de veículo em seu nome: <strong class="font-semibold">{{ auth()->user()->name }}</strong>.</span>
-                    </div>
-                @endcan
-
-                {{-- Seleção do Veículo --}}
-                <div class="{{ auth()->user()->can('is-staff') ? 'col-span-2 md:col-span-1' : 'col-span-2' }}">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Veículo Disponível</label>
-                    <select wire:model.live="veiculo_id" required
-                            class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-blue-500 focus:border-blue-500">
-                        <option value="">Selecione um veículo...</option>
-                        @foreach($veiculosDisponiveis as $veiculo)
-                            <option value="{{ $veiculo->id }}">
-                                {{ $veiculo->marca }} {{ $veiculo->modelo }} — Placa: {{ $veiculo->placa }}
-                            </option>
-                        @endforeach
-                    </select>
-                    @error('veiculo_id')
-                        <span class="text-red-500 text-xs">{{ $message }}</span>
-                    @enderror
+<div class="bg-white rounded-xl shadow p-6">
+    <form wire:submit.prevent="confirmarLocacao" class="space-y-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            {{-- Autocomplete de Clientes --}}
+            <div class="relative col-span-1">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Selecionar Cliente</label>
+                <div class="relative">
+                    <input type="text" wire:model.live.debounce.200ms="busca_cliente" 
+                           placeholder="Digite o nome ou CPF do cliente..."
+                           {{ $cliente_id ? 'readonly' : '' }}
+                           class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500 {{ $cliente_id ? 'bg-blue-50 border-blue-200 font-medium text-blue-800' : '' }}">
+                    
+                    @if($cliente_id)
+                        <button type="button" wire:click="limparCliente" class="absolute inset-y-0 right-3 flex items-center text-xs text-red-500 hover:underline font-semibold">✕ Limpar</button>
+                    @endif
                 </div>
+                @error('cliente_id') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
 
-                {{-- Data e Hora de Retorno (Devolução) --}}
-                <div class="col-span-2 md:col-span-1">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Data/Hora Prevista de Devolução</label>
-                    <input type="datetime-local" wire:model.live="data_hora_retorno" 
-                           min="{{ now()->format('Y-m-d\TH:i') }}"
-                           required
-                           class="w-full border border-gray-300 rounded-lg px-3 py-2">
-                    @error('data_hora_retorno')
-                        <span class="text-red-500 text-xs">{{ $message }}</span>
-                    @enderror
-                </div>
-
-                {{-- Valor da Diária --}}
-                <div class="col-span-2 md:col-span-1">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Valor da Diária (R$)</label>
-                    <input type="number" wire:model.live="valor_diaria" 
-                           step="0.01"
-                           min="0"
-                           placeholder="0,00"
-                           required
-                           class="w-full border border-gray-300 rounded-lg px-3 py-2">
-                    @error('valor_diaria')
-                        <span class="text-red-500 text-xs">{{ $message }}</span>
-                    @enderror
-                </div>
-
-                {{-- NOVO BLOCO: Exibição Dinâmica do Valor Total do Contrato --}}
-                @if($valor_total > 0)
-                    <div class="col-span-2 mt-2 p-4 bg-emerald-50 border border-emerald-100 rounded-xl flex justify-between items-center shadow-sm animate-fade-in">
-                        <div>
-                            <h4 class="text-sm font-medium text-emerald-800">Resumo do Investimento</h4>
-                            <p class="text-xs text-emerald-600 mt-0.5">Calculado dinamicamente pelo sistema baseado nas datas informadas.</p>
-                        </div>
-                        <div class="text-right">
-                            <span class="text-xs font-semibold text-emerald-700 block uppercase tracking-wider">Valor Total Estimado</span>
-                            <span class="text-xl font-bold text-emerald-600 font-mono">
-                                R$ {{ number_format($valor_total, 2, ',', '.') }}
-                            </span>
-                        </div>
+                @if(!empty($busca_cliente) && !$cliente_id)
+                    <div class="absolute z-20 w-full bg-white border border-gray-200 rounded-lg shadow-lg mt-1 divide-y divide-gray-50 max-h-48 overflow-y-auto">
+                        @forelse($clientes as $c)
+                            <button type="button" wire:click="selecionarCliente({{ $c->id }}, '{{ $c->name }}')" class="w-full text-left px-4 py-2 hover:bg-slate-50 text-sm flex justify-between">
+                                <span class="font-medium text-gray-800">{{ $c->name }}</span>
+                                <span class="text-gray-400 font-mono text-xs">CPF: {{ $c->cpf }}</span>
+                            </button>
+                        @empty
+                            <div class="px-4 py-2 text-xs text-gray-400 italic">Nenhum cliente correspondente...</div>
+                        @endforelse
                     </div>
                 @endif
-
             </div>
 
-            <div class="mt-6 flex gap-3">
-                <button type="submit"
-                        class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-150 font-medium text-sm shadow-sm">
-                    Confirmar Locação
-                </button>
-                <a href="{{ route('contratos.index') }}"
-                   class="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition duration-150 text-sm font-medium">
-                    Cancelar
-                </a>
+            {{-- Autocomplete de Veículos --}}
+            <div class="relative col-span-1">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Veículo Disponível</label>
+                <div class="relative">
+                    <input type="text" wire:model.live.debounce.200ms="busca_veiculo" 
+                           placeholder="Busque por marca, modelo ou placa..."
+                           {{ $veiculo_id ? 'readonly' : '' }}
+                           class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500 {{ $veiculo_id ? 'bg-blue-50 border-blue-200 font-medium text-blue-800' : '' }}">
+                    
+                    @if($veiculo_id)
+                        <button type="button" wire:click="limparVeiculo" class="absolute inset-y-0 right-3 flex items-center text-xs text-red-500 hover:underline font-semibold">✕ Limpar</button>
+                    @endif
+                </div>
+                @error('veiculo_id') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
+
+                @if(!empty($busca_veiculo) && !$veiculo_id)
+                    <div class="absolute z-20 w-full bg-white border border-gray-200 rounded-lg shadow-lg mt-1 divide-y divide-gray-50 max-h-48 overflow-y-auto">
+                        @forelse($veiculos as $v)
+                            <button type="button" wire:click="selecionarVeiculo({{ $v->id }}, '{{ $v->marca }} {{ $v->modelo }} — {{ $v->placa }}')" class="w-full text-left px-4 py-2 hover:bg-slate-50 text-sm flex justify-between">
+                                <span class="font-medium text-gray-800">{{ $v->marca }} {{ $v->modelo }}</span>
+                                <span class="bg-gray-100 border border-gray-200 px-1.5 py-0.5 font-mono text-xs uppercase text-gray-600 rounded">{{ $v->placa }}</span>
+                            </button>
+                        @empty
+                            <div class="px-4 py-2 text-xs text-gray-400 italic">Nenhum veículo disponível encontrado...</div>
+                        @endforelse
+                    </div>
+                @endif
             </div>
-        </form>
-    </div>
+
+            {{-- Data Prevista de Retorno (AJUSTADO PARA COL-SPAN-1) --}}
+            <div class="col-span-1">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Data/Hora Prevista de Devolução</label>
+                <input type="datetime-local" wire:model="data_hora_retorno" required
+                       class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500">
+                @error('data_hora_retorno') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
+            </div>
+
+        </div>
+
+        {{-- Botões de Envio --}}
+        <div class="mt-8 flex gap-3 border-t border-gray-100 pt-6 justify-start">
+            <button type="submit"
+                    class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium text-sm shadow-sm">
+                Confirmar Locação
+            </button>
+            <a href="{{ route('contratos.index') }}"
+               class="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition text-sm font-medium">
+                Cancelar
+            </a>
+        </div>
+    </form>
 </div>

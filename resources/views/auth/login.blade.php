@@ -80,6 +80,21 @@
                            hover:bg-blue-700 font-medium transition">
                 Entrar
             </button>
+            <div class="mt-4">
+            
+        </div>
+
+                <div class="mt-5 text-center border-t border-gray-100 pt-4">
+                    <p class="text-sm text-gray-600">
+                        Não tem uma conta? 
+                        <a href="{{ route('register') }}" class="text-blue-600 hover:text-blue-800 font-semibold underline transition duration-150">
+                            Cadastre-se aqui
+                        </a>
+                    </p>
+                </div>
+
+            </form>
+        </div>
 
         </form>
 
