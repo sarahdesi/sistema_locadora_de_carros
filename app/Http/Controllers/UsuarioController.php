@@ -108,7 +108,7 @@ class UsuarioController extends Controller
         // Registra no log de atividades
         LogAtividade::create([
             'usuario_id' => auth()->id(),
-            'acao'        => 'Atualização',
+            'acao'        => 'Atualização de usuário',
             'descricao'        => 'Atualizou os dados do usuário ' . $usuario->name,
         ]);
 
@@ -128,7 +128,7 @@ class UsuarioController extends Controller
         // Registra no log de atividades
         LogAtividade::create([
             'usuario_id' => auth()->id(),
-            'acao'        => 'Remoção',
+            'acao'        => 'Remoção de usuário',
             'descricao'        => 'Removeu os dados do usuário ' . $usuario->name,
         ]);
 

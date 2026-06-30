@@ -87,42 +87,51 @@ new class extends Component {
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         
         {{-- Auto-complete / Filtro de veículos premium --}}
-        <div class="col-span-1 md:col-span-2 relative">
-            <label class="block text-sm font-medium text-gray-700 mb-1">Veículo para Manutenção</label>
+        {{-- Auto-complete / Filtro de veículos premium --}}
+<div class="col-span-1 md:col-span-2 relative">
+    <label class="block text-sm font-medium text-gray-700 mb-1">Veículo para Manutenção</label>
+    
+    <div class="relative">
+        @if($veiculo_id)
+            {{-- ESTADO: Veículo já selecionado (Apenas Leitura) --}}
+            <input type="text" 
+                   wire:key="input-veiculo-selecionado"
+                   value="{{ $busca_veiculo }}" 
+                   readonly
+                   class="w-full border border-blue-200 bg-blue-50 rounded-lg px-4 py-2.5 text-sm font-medium text-blue-800">
             
-            <div class="relative">
-                <input type="text" wire:model.live.debounce.300ms="busca_veiculo" 
-                       placeholder="Digite a marca, modelo ou placa..."
-                       {{ $veiculo_id ? 'readonly' : '' }}
-                       class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:ring-blue-500 focus:border-blue-500 {{ $veiculo_id ? 'bg-blue-50 font-medium text-blue-800 border-blue-200' : '' }}">
-                
-                @if($veiculo_id)
-                    <button type="button" wire:click="limparSelecao" class="absolute inset-y-0 right-0 pr-3 flex items-center text-sm text-red-500 hover:text-red-700 font-semibold">
-                        ✕ Alterar Carro
-                    </button>
-                @endif
-            </div>
-            
-            @error('veiculo_id') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
+            <button type="button" wire:click="limparSelecao" class="absolute inset-y-0 right-0 pr-3 flex items-center text-sm text-red-500 hover:text-red-700 font-semibold">
+                ✕ Alterar Carro
+            </button>
+        @else
+            {{-- ESTADO: Campo de busca ativo --}}
+            <input type="text" 
+                   wire:key="input-veiculo-busca"
+                   wire:model.live.debounce.300ms="busca_veiculo" 
+                   placeholder="Digite a marca, modelo ou placa..."
+                   class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:ring-blue-500 focus:border-blue-500">
+        @endif
+    </div>
+    
+    @error('veiculo_id') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
 
-            {{-- Resultados flutuantes da pesquisa --}}
-            @if(!empty($busca_veiculo) && !$veiculo_id)
-                <div class="absolute z-10 w-full bg-white border border-gray-200 rounded-lg shadow-lg mt-1 max-h-60 overflow-y-auto divide-y divide-gray-50">
-                    @forelse($veiculos as $v)
-                        <button type="button" wire:click="selecionarVeiculo({{ $v->id }})" class="w-full text-left px-4 py-3 hover:bg-slate-50 transition text-sm flex justify-between items-center">
-                            <div>
-                                <span class="font-semibold text-gray-800">{{ $v->marca }} {{ $v->modelo }}</span>
-                                <span class="text-gray-400 text-xs font-mono ml-2 uppercase bg-gray-100 px-1.5 py-0.5 rounded border border-gray-200">{{ $v->placa }}</span>
-                            </div>
-                            <span class="text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full uppercase tracking-wider">{{ $v->status }}</span>
-                        </button>
-                    @empty
-                        <div class="px-4 py-3 text-sm text-gray-400 italic">Nenhum veículo disponível encontrado...</div>
-                    @endforelse
-                </div>
-            @endif
-
+    {{-- Resultados flutuantes da pesquisa --}}
+    @if(!empty($busca_veiculo) && !$veiculo_id)
+        <div class="absolute z-10 w-full bg-white border border-gray-200 rounded-lg shadow-lg mt-1 max-h-60 overflow-y-auto divide-y divide-gray-50">
+            @forelse($veiculos as $v)
+                <button type="button" wire:click="selecionarVeiculo({{ $v->id }})" class="w-full text-left px-4 py-3 hover:bg-slate-50 transition text-sm flex justify-between items-center">
+                    <div>
+                        <span class="font-semibold text-gray-800">{{ $v->marca }} {{ $v->modelo }}</span>
+                        <span class="text-gray-400 text-xs font-mono ml-2 uppercase bg-gray-100 px-1.5 py-0.5 rounded border border-gray-200">{{ $v->placa }}</span>
+                    </div>
+                    <span class="text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full uppercase tracking-wider">{{ $v->status }}</span>
+                </button>
+            @empty
+                <div class="px-4 py-3 text-sm text-gray-400 italic">Nenhum veículo disponível encontrado...</div>
+            @endforelse
         </div>
+    @endif
+</div>
 
         {{-- Tipo de Manutenção --}}
         <div>

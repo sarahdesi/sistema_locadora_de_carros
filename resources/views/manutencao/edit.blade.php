@@ -5,7 +5,7 @@
                 ← Voltar
             </a>
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                🔧 Atualizar Ordem de Serviço — O.S. #{{ $manutencao->id }}
+                🔧 Atualizar Ordem de Serviço {{ $manutencao->id }}
             </h2>
         </div>
     </x-slot>

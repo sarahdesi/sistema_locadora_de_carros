@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <div class="flex items-center gap-4">
-            <a href="{{ route('contratos.show', $contrato) }}"
+            <a href="{{ route('contratos.index') }}"
                class="text-gray-500 hover:text-gray-700 transition duration-150">
                 ← Voltar
             </a>
@@ -107,7 +107,7 @@
                                 class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-150 text-sm font-medium shadow-sm">
                             Salvar Alterações
                         </button>
-                        <a href="{{ route('contratos.show', $contrato) }}"
+                        <a href="{{ route('contratos.show', $contrato->id) }}"
                            class="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition duration-150 text-sm font-medium">
                             Cancelar
                         </a>

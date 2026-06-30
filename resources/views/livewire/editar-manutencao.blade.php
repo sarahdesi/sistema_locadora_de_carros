@@ -113,14 +113,14 @@ new class extends Component {
         @if($status === 'concluida')
             <div class="col-span-1 md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-emerald-50/60 border border-emerald-100 rounded-xl animate-fadeIn">
                 <div>
-                    <label class="block text-sm font-medium text-emerald-900 mb-1">Custo Final Fechado (R$)</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Custo Final Fechado (R$)</label>
                     <input type="number" wire:model="custo" step="0.01" required
                            class="w-full border border-emerald-300 rounded-lg px-3 py-2 text-sm focus:ring-emerald-500 focus:border-emerald-500 bg-white font-mono">
                     @error('custo') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-emerald-900 mb-1">Data de Saída (Fim do Serviço)</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Data de Saída (Fim do Serviço)</label>
                     <input type="date" wire:model="data_saida" required
                            class="w-full border border-emerald-300 rounded-lg px-3 py-2 text-sm focus:ring-emerald-500 focus:border-emerald-500 bg-white">
                     @error('data_saida') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
@@ -150,11 +150,11 @@ new class extends Component {
     <div class="mt-8 flex gap-3 border-t border-gray-100 pt-6">
         <button type="submit"
                 class="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium text-sm shadow-sm">
-            Salvar Histórico Técnico
+            Salvar
         </button>
         <a href="{{ route('manutencao.index') }}"
            class="px-6 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition text-sm font-medium">
-            Voltar
+            Cancelar
         </a>
     </div>
 </form>

@@ -2,7 +2,7 @@
     <x-slot name="header">
         <div class="flex justify-between items-center">
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                🔧 Controle de Manutenções da Frota
+                 Controle de Manutenções da Frota
             </h2>
             {{-- Botão para registrar nova manutenção --}}
             <a href="{{ route('manutencao.create') }}" 

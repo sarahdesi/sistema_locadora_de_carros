@@ -2,7 +2,7 @@
     <x-slot name="header">
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                📊 Painel Executivo e Relatórios
+             Painel Executivo e Relatórios
             </h2>
 
             @can('is-gerente')

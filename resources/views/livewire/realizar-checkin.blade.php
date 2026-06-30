@@ -7,104 +7,218 @@ use Carbon\Carbon;
 new class extends Component {
     public Contrato $contrato;
 
-    // Campos da Vistoria de Saída
-    public $km_inicial;
-    public $nivel_combustivel = 'Cheio';
-    public $conferencia_obj = 'Estepe, Macaco, Chave de Roda, Triângulo, Documento do Veículo.';
-    public $avarias = 'Nenhuma avaria aparente.';
+    // Campos do formulário
+    public $odometro_final;
+    public $data_real_entrega;
+    public $nivel_combustivel_retorno = 'Cheio';
+    public $avaliacao_limpeza = 'Bom';
+    public $conferencia_obj_retorno = '';
+    public $avarias_retorno = 'Sem avarias novas.';
+    public $custo_adicional = 0.00;
+    public $observacoes = '';
+    
+    // Propriedades calculadas
+    public $dias_atraso = 0;
+    public $valor_multa_atraso = 0;
+    public $valor_final = 0;
 
     public function mount(Contrato $contrato)
     {
         $this->contrato = $contrato;
-        // Puxa o KM atual do carro de forma automática
-        $this->km_inicial = $contrato->veiculo ? $contrato->veiculo->odometro : 0;
+        $this->data_real_entrega = Carbon::now()->format('Y-m-d\TH:i');
+        $this->odometro_final = $contrato->veiculo ? $contrato->veiculo->odometro : 0;
+        
+        $this->recalcularCheckout();
     }
 
-    public function confirmarCheckin()
+    public function updated($propertyName)
     {
+        if (in_array($propertyName, ['data_real_entrega', 'odometro_final', 'custo_adicional'])) {
+            $this->recalcularCheckout();
+        }
+    }
+
+    public function recalcularCheckout()
+    {
+        $previsto = Carbon::parse($this->contrato->data_hora_retorno);
+        $real = Carbon::parse($this->data_real_entrega);
+        
+        if ($real->gt($previsto)) {
+            $this->dias_atraso = max(1, ceil($previsto->diffInHours($real) / 24));
+            $this->valor_multa_atraso = $this->dias_atraso * ($this->contrato->valor_diaria * 1.2);
+        } else {
+            $this->dias_atraso = 0;
+            $this->valor_multa_atraso = 0;
+        }
+
+        $valorBase = $this->contrato->valor_total ?? ($this->contrato->valor_diaria * 1); 
+        $this->valor_final = $valorBase + $this->valor_multa_atraso + (float) ($this->custo_adicional ?? 0);
+    }
+
+    public function fecharContrato()
+    {
+        $this->recalcularCheckout();
+        $minKm = $this->contrato->veiculo ? $this->contrato->veiculo->odometro : 0;
+
         $this->validate([
-            'km_inicial' => 'required|numeric|min:0',
-            'nivel_combustivel' => 'required|string',
-            'conferencia_obj' => 'required|string',
-            'avarias' => 'nullable|string',
+            'odometro_final' => 'required|numeric|min:' . $minKm,
+            'data_real_entrega' => 'required|date',
+            'nivel_combustivel_retorno' => 'required|string',
+            'avaliacao_limpeza' => 'required|string',
+            'conferencia_obj_retorno' => 'nullable|string',
+            'avarias_retorno' => 'nullable|string',
+            'custo_adicional' => 'required|numeric|min:0',
+            'observacoes' => 'nullable|string',
+        ], [
+            'odometro_final.min' => 'O odômetro final não pode ser menor que o KM inicial (' . $minKm . ' km).'
         ]);
 
-        // 1. Cria o registro de Vistoria (Check-in) vinculado ao contrato
-        // Ajuste os nomes das colunas se forem ligeiramente diferentes no seu banco
-        $this->contrato->checkIn()->create([
-            'km_inicial' => $this->km_inicial,
-            'nivel_combustivel' => $this->nivel_combustivel,
-            'data_hora_saida' => Carbon::now(),
-            'status' => 'finalizado',
-            'conferencia_obj' => $this->conferencia_obj,
-            'avarias' => $this->avarias,
-        ]);
-
-        // 2. Altera o contrato para 'em_andamento'
         $this->contrato->update([
-            'status_contrato' => 'em_andamento',
+            'status_contrato' => 'encerrado',
+            'data_hora_devolucao' => $this->data_real_entrega,
+            'km_final' => $this->odometro_final,
+            'nivel_combustivel_retorno' => $this->nivel_combustivel_retorno,
+            'avaliacao_limpeza' => $this->avaliacao_limpeza,
+            'conferencia_obj_retorno' => $this->conferencia_obj_retorno,
+            'avarias_retorno' => $this->avarias_retorno,
+            'custo_adicional' => $this->custo_adicional,
+            'observacoes' => $this->observacoes,
+            'valor_total' => $this->valor_final,
         ]);
 
-        // 3. Altera o veículo para 'locado'
         if ($this->contrato->veiculo) {
             $this->contrato->veiculo->update([
-                'status' => 'locado'
+                'odometro' => $this->odometro_final,
+                'status' => 'disponivel'
             ]);
         }
 
-        session()->flash('sucesso_checkin', 'Check-in concluído! Vistoria salva e veículo liberado.');
-
+        session()->flash('sucesso_checkout', 'Check-out realizado com sucesso!');
         return redirect()->route('contratos.show', $this->contrato->id);
     }
 }; ?>
 
-<div class="bg-slate-50 border border-gray-200 rounded-xl p-5 shadow-sm">
-    <h4 class="text-sm font-bold text-gray-800 mb-1 uppercase tracking-wider">📋 Vistoria de Saída (Check-in)</h4>
-    <p class="text-xs text-gray-500 mb-4">Preencha os dados do veículo antes de liberar a saída com o cliente.</p>
-    
-    <form wire:submit.prevent="confirmarCheckin" class="space-y-4">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            
-            {{-- KM Inicial --}}
+<div>
+    <div class="flex items-center gap-2 mb-4 pb-2 border-b border-gray-100">
+        <span class="text-lg">🔍</span>
+        <h4 class="text-sm font-bold text-gray-800 uppercase tracking-wider">Vistoria de Retorno (Check-out)</h4>
+    </div>
+
+    <form wire:submit.prevent="fecharContrato" class="space-y-5">
+        
+        {{-- SEÇÃO 1: Dados Cronológicos e Km --}}
+        <div class="bg-gray-50/60 p-3 rounded-xl border border-gray-100">
+            <span class="text-[10px] font-bold text-blue-600 uppercase tracking-wide block mb-2">1. Coleta de Dados Básicos</span>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs font-medium text-gray-500 mb-1">Odômetro Final (KM Atual)</label>
+                    <div class="relative">
+                        <input type="number" wire:model.live.debounce.500ms="odometro_final" required
+                               class="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm font-mono focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
+                        <span class="absolute inset-y-0 right-3 flex items-center text-xs text-gray-400 pointer-events-none">km</span>
+                    </div>
+                    @error('odometro_final') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-gray-500 mb-1">Data/Hora Real da Devolução</label>
+                    <input type="datetime-local" wire:model.live="data_real_entrega" required
+                           class="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+            </div>
+        </div>
+
+        {{-- SEÇÃO 2: Condições do Veículo --}}
+        <div class="bg-gray-50/60 p-3 rounded-xl border border-gray-100">
+            <span class="text-[10px] font-bold text-blue-600 uppercase tracking-wide block mb-2">2. Estado do Veículo</span>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs font-medium text-gray-500 mb-1">Nível do Combustível</label>
+                    <select wire:model="nivel_combustivel_retorno" required
+                            class="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm bg-white focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
+                        <option value="Cheio">Cheio (1/1)</option>
+                        <option value="3/4">3/4</option>
+                        <option value="Meio">Meio (1/2)</option>
+                        <option value="1/4">1/4</option>
+                        <option value="Reserva">Reserva</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-gray-500 mb-1">Avaliação de Limpeza</label>
+                    <select wire:model="avaliacao_limpeza" required
+                            class="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm bg-white focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
+                        <option value="Excelente">Excelente</option>
+                        <option value="Bom">Bom</option>
+                        <option value="Regular">Regular (Sujeira leve)</option>
+                        <option value="Ruim">Ruim (Necessita Lavagem Pesada)</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        {{-- SEÇÃO 3: Detalhes & Observações --}}
+        <div class="space-y-3">
             <div>
-                <label class="block text-xs font-medium text-gray-600 mb-1">Quilometragem Inicial</label>
-                <input type="number" wire:model="km_inicial" required
-                       class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 bg-gray-100" readonly>
-                <p class="text-[10px] text-gray-400 mt-0.5">Capturado automaticamente do cadastro do veículo.</p>
+                <label class="block text-xs font-medium text-gray-500 mb-1">Conferência de Objetos Retorno (Estepe, Macaco, Chave de Roda...)</label>
+                <textarea wire:model="conferencia_obj_retorno" rows="2" placeholder="Ex: Todos os pertences e ferramentas devolvidos corretamente."
+                          class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"></textarea>
             </div>
 
-            {{-- Nível de Combustível --}}
             <div>
-                <label class="block text-xs font-medium text-gray-600 mb-1">Nível do Tanque</label>
-                <select wire:model="nivel_combustivel" required
-                        class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2">
-                    <option value="Cheio">Cheio (1/1)</option>
-                    <option value="3/4">3/4</option>
-                    <option value="Meio">Meio (1/2)</option>
-                    <option value="1/4">1/4</option>
-                    <option value="Reserva">Reserva</option>
-                </select>
+                <label class="block text-xs font-medium text-gray-500 mb-1">Avarias Identificadas no Retorno</label>
+                <textarea wire:model="avarias_retorno" rows="2" required
+                          class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"></textarea>
             </div>
 
-            {{-- Objetos de Conferência --}}
-            <div class="col-span-2">
-                <label class="block text-xs font-medium text-gray-600 mb-1">Itens Obrigatórios de Conferência</label>
-                <textarea wire:model="conferencia_obj" rows="2" required
-                          class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2"></textarea>
+            <div>
+                <label class="block text-xs font-medium text-gray-500 mb-1">Observações Gerais</label>
+                <textarea wire:model="observacoes" rows="2" placeholder="Notas internas ou observações extras adicionais."
+                          class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"></textarea>
+            </div>
+        </div>
+
+        {{-- SEÇÃO 4: Financeiro --}}
+        <div class="bg-gray-50 p-3 rounded-xl border border-gray-100 space-y-3">
+            <div>
+                <label class="block text-xs font-medium text-gray-600 mb-1">Custo Adicional (Multas por sujeira, combustível faltando, etc.)</label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-3 flex items-center text-xs text-gray-400 pointer-events-none">R$</span>
+                    <input type="number" step="0.01" min="0" wire:model.live.debounce.500ms="custo_adicional" required
+                           class="w-full border border-gray-300 rounded-lg pl-8 pr-3 py-1.5 text-sm font-mono focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
+                </div>
             </div>
 
-            {{-- Avarias do Veículo --}}
-            <div class="col-span-2">
-                <label class="block text-xs font-medium text-gray-600 mb-1">Avarias / Riscos / Amassados (Saída)</label>
-                <textarea wire:model="avarias" rows="2" placeholder="Ex: Risco leve na porta do motorista..."
-                          class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2"></textarea>
-            </div>
+            <div class="border-t border-gray-200 pt-2 space-y-1 text-xs">
+                <div class="flex justify-between text-gray-500">
+                    <span>Valor Base Original:</span>
+                    <span class="font-mono">R$ {{ number_format($contrato->valor_total ?? 0, 2, ',', '.') }}</span>
+                </div>
+                
+                @if($dias_atraso > 0)
+                    <div class="flex justify-between text-red-600 font-semibold">
+                        <span>Multa Atraso ({{ $dias_atraso }} d):</span>
+                        <span class="font-mono">+ R$ {{ number_format($valor_multa_atraso, 2, ',', '.') }}</span>
+                    </div>
+                @endif
 
+                @if((float)$custo_adicional > 0)
+                    <div class="flex justify-between text-amber-600 font-semibold">
+                        <span>Custos Adicionais Informados:</span>
+                        <span class="font-mono">+ R$ {{ number_format($custo_adicional, 2, ',', '.') }}</span>
+                    </div>
+                @endif
+
+                <div class="flex justify-between text-sm font-bold text-gray-800 border-t border-gray-200 pt-2 mt-1">
+                    <span>Total Final do Fechamento:</span>
+                    <span class="text-blue-600 font-mono">R$ {{ number_format($valor_final, 2, ',', '.') }}</span>
+                </div>
+            </div>
         </div>
 
         <button type="submit" 
-                class="w-full mt-2 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg shadow-sm transition flex items-center justify-center gap-2">
-            Confirmar Vistoria e Liberar Carro
+                class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-lg shadow-sm transition">
+            Concluir Check-out e Fechar Conta
         </button>
     </form>
 </div>
